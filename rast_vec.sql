@@ -61,3 +61,17 @@ select rast_data.qlayer.*,plgon.number
 into rast_data.qlayer_new
 from rast_data.qlayer, vec_data.plgon
 where st_intersects(qlayer.geom,plgon.geom);
+
+
+
+-- Calculation the value of a point from 4 closest surrounded points
+select pnt_temp.id, pnt_temp.geom, sum(c.temp*(1/c.dist))/sum((1/c.dist)) as temp_value,
+avg(c.dist) as avg_dist
+from vec_data.pnt_temp
+cross join lateral(
+        select temp, temp.geom <-> pnt_temp.geom as dist
+        from vec_data.temp
+        order by temp.geom <-> pnt_temp.geom
+        limit 4
+        ) c
+group by pnt_temp.id,pnt_temp.geom
