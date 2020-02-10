@@ -75,3 +75,9 @@ cross join lateral(
         limit 4
         ) c
 group by pnt_temp.id,pnt_temp.geom
+
+-- Register and add constraint to the table
+select Populate_Geometry_columns('schema.table'::regclass)
+
+-- Counting the number of the column
+select count(*) from information_schema where table_name = 'table_name'
