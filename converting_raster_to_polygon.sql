@@ -1,3 +1,5 @@
+-- New version of the script is available in the extract_pixel_values_from_db.sql
+
 -- Creation of the separate tables
 SELECT x,y,val as ymonstd_january, geom As geom
 into soilmoisture.ymonstd_1
