@@ -1,3 +1,13 @@
+-- Checking & Changing the coordinate system
+-- Creating a buffer
+-- Selection of the vactors which completely inside
+-- Calculation of the distance betwwen different objects
+-- Changing the coordinate system of the raster
+-- Selection of the pixels which are inside the polygons
+-- Calculation the value of a point from 4 closest surrounded points
+-- Register and add constraint to the table
+-- Counting the number of the column
+
 select * from vec_data.pnt;
 
 -- Checking & Changing the coordinate system
@@ -40,20 +50,6 @@ select st_srid(rast) from rast_data.rast;
 select st_transform(rast,32632) into rast_data.new_rast from rast_data.rast;
 
 --alter table rast_data.rast rename column st_transform to rast;
-
--- Converting the pixels to polygons
-drop table rast_data.qlayer;
-SELECT x,y,val, geom As geom
-into rast_data.qlayer
-FROM (
-SELECT dp.*
-FROM rast_data.rast, LATERAL ST_PixelAsPolygons(rast,1) AS dp
-) As foo where val > 0
-
-select rast_data.qlayer.val as val_1, rast_data.qlayer_2.val as val_2, rast_data.qlayer.geom
-into rast_data.qlayer_3
-from rast_data.qlayer join rast_data.qlayer_2
-on rast_data.qlayer_2.x = rast_data.qlayer.x and rast_data.qlayer_2.y = rast_data.qlayer.y
 
 -- Selection of the pixels which are inside the polygons
 drop table rast_data.qlayer_new

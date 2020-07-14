@@ -1,6 +1,13 @@
 -- Working with raster data in the DB --
 
 -- Extract the pixel values for the all the pixel
+-- Extract the pixel value for all the pixels with coordinates
+-- extract the pixel value for specific points
+-- Convert pixels to polygons
+
+
+
+-- Extract the pixel values for the all the pixel
 SELECT x, y, ST_Value(rast, 1, x, y) As red,
 	ST_Value(rast, 2, x, y) As green, ST_Value(rast, 3, x, y) As blue
 FROM terramonitor.terramonitor_ee_fall_10m CROSS JOIN
