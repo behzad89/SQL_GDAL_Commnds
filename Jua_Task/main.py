@@ -1,10 +1,17 @@
+# Name: training_validation_process.py
+# Description: Pipeline for process and convert NetCDF file into parquet file
+# Author: Behzad Valipour Sh. <b.valipour.sh@gmail.com>
+# Date:11.11.2022
+
 import argparse
 import logging
+import multiprocessing as mp
 import os
-from typing import Optional
+from functools import partial
+from typing import List, Optional
 
-import boto3
-import h3pandas
+import coloredlogs
+import h3.api.numpy_int as h3
 import numpy as np
 import pandas as pd
 import s3fs
@@ -14,9 +21,12 @@ from botocore.config import Config
 
 # Constants
 logger = logging.getLogger(__name__)
-BUCKET = "era5-pds"
-# OUTPUT = "training/Jua_Task/{FILE}]"
 
+coloredlogs.install(fmt="%(levelname)s:%(message)s", level="INFO",
+                    level_styles={"info": {"color": "white"},
+                                  "error": {"color": "red"},
+                                  "warning": {"color": "yellow"}})
+BUCKET = "era5-pds"
 
 def _download_from_s3(bucket: str, file_path: str, output_path: str):
     """Download the files from the S3 bucket"""
@@ -30,7 +40,22 @@ def _read_obj_from_s3(s3path: str):
     # e.g. s3path = 'era5-pds/2022/05/data/precipitation_amount_1hour_Accumulation.nc'
     fs_s3 = s3fs.S3FileSystem(anon=True)
     remote_file_obj = fs_s3.open(s3path, mode='rb')
-    return remote_file_obj    
+    return remote_file_obj
+
+def _geo_to_h3_array(coordinates, resolution: int) -> List[int]:
+    hexes = [h3.geo_to_h3(coordinates[i, 0], coordinates[i, 1], resolution) for i in range(coordinates.shape[0])]
+    return hexes
+
+
+def _H3Index(coordinates: np.ndarray, resolution: int = 10) -> np.ndarray:
+    cpus = mp.cpu_count()
+    arrays = np.array_split(coordinates, cpus)
+    fn = partial(_geo_to_h3_array, resolution=resolution)
+    with mp.Pool(processes=cpus) as pool:
+        results = pool.map(fn, arrays)
+    flattened = [item for sublist in results for item in sublist]
+    h3arr = np.array(flattened, dtype=np.uint64)
+    return h3arr
 
 
 def convert_netCDF_to_parquet(file_path, output_path: str, timestamp_filter: Optional[tuple] = None, resolution: int = 10):
@@ -43,31 +68,22 @@ def convert_netCDF_to_parquet(file_path, output_path: str, timestamp_filter: Opt
     list_coords = list(ds.coords)
 
     if timestamp_filter is not None:
-        logger.info("Filtering datestampe between %s-%s", timestamp_filter[0], timestamp_filter[1])
+        logger.info("Filtering datestampe between %s & %s", timestamp_filter[0], timestamp_filter[1])
         filter = {list_coords[2]: slice(
             timestamp_filter[0], timestamp_filter[1])}
         ds = ds.sel(filter)
 
+    logger.info("Extract coordinates & value")
     latitudes = ds[list_coords[0]].values
     longitudes = ds[list_coords[1]].values
     times = ds[list_coords[2]].values
     ds_values = ds[variable_name].values
-
-    # Convert to DataFrame
-    logger.info("Converting data to DataFrame")
-    times_grid, latitudes_grid, longitudes_grid = [
-        x.flatten() for x in np.meshgrid(times, latitudes, longitudes, indexing='ij')]
-    df = pd.DataFrame({
-        'time': times_grid,
-        'latitude': latitudes_grid,
-        'longitude': longitudes_grid,
-        'precipitation_amount_1hour_Accumulation': ds_values.flatten()})
+    coordinates = np.vstack((latitudes,longitudes)).T
 
     # Apply spatial index
     logger.info("Apply Spatial Index")
-    dfh3 = df.h3.geo_to_h3(resolution=resolution, lat_col="latitude", lng_col="longitude")
-    return dfh3.to_parquet(output_path)
-
+    IndxH3 = _H3Index(coordinates=coordinates,resolution=resolution )
+    return dfh3.to_parquet(output_path) # Should be worked
 
 def main():
     parser = argparse.ArgumentParser(description="Transform the data into the Apache Parquet datasource")
@@ -87,18 +103,10 @@ def main():
 
     KEY = f"{DATE.split('-')[0]}/{DATE.split('-')[1]}/data/{FILE}"
 
-    # FILE_PATH = _read_obj_from_s3(os.path.join(BUCKET, KEY))
-    FILE_PATH = _read_obj_from_s3(BUCKET+'/'+KEY)
+    FILE_PATH = _read_obj_from_s3(os.path.join(BUCKET, KEY))
     convert_netCDF_to_parquet(FILE_PATH, OUTPATH, (StartDate, EndDate), RESOLUTION)
     
     logger.info("File was save in %s",OUTPATH)
 
 if __name__ == "__main__":
     main()
-
-# download_from_s3(BUCKET, KEY, OUTPUT)
-
-
-# required args: year, month, file_name, start, resolution
-
-# s3://era5-pds/2022/05/data/precipitation_amount_1hour_Accumulation.nc.
