@@ -1,0 +1,5 @@
+To update the docker image we use the following command:
+
+docker commit <container_ID>  <Image_Name>:<Tag>
+
+It is recommended to use the VScode Docker extension to push & pull the saved docker image to the dockerHub
