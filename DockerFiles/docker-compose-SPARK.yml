@@ -1,0 +1,38 @@
+networks:
+  my_network:
+    external: true  # Use the existing network
+
+services:
+  container1:
+    image: behzad89/geo-miniconda3:latest
+    container_name: master-node
+    networks:
+      - my_network
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["/opt/spark/sbin/start-master.sh && tail -f /dev/null"]  # Custom command for container1
+    ports:
+      - "8080:8080"
+
+  container2:
+    image: behzad89/geo-miniconda3:latest
+    container_name: worker-node-1
+    networks:
+      - my_network
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["/opt/spark/sbin/start-slave.sh spark://master-node:7077 && tail -f /dev/null"]  # Custom command for container2
+    # ports:
+    #   - "8081:80"
+
+
+  container3:
+    image: behzad89/geo-miniconda3:latest
+    container_name: worker-node-2
+    networks:
+      - my_network
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["/opt/spark/sbin/start-slave.sh spark://master-node:7077 && tail -f /dev/null"]  # Custom command for container2
+    # ports:
+    #   - "8081:80"
+
+# docker-compose down
+# docker-compose -f <Compose_File> up -d

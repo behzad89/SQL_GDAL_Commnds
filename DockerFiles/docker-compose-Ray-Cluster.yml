@@ -1,0 +1,27 @@
+networks:
+  my_network:
+    external: true  # Use the existing network
+
+services:
+  container1:
+    image: behzad89/geo-miniconda3:latest
+    container_name: ray-head
+    networks:
+      - my_network
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["ray start --head --port=6379 --dashboard-host 0.0.0.0 && tail -f /dev/null"]  # Custom command for container1
+    ports:
+      - "8265:8265"
+
+  container2:
+    image: behzad89/geo-miniconda3:latest
+    container_name: ray-node
+    networks:
+      - my_network
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["ray start --address='ray-head:6379' && tail -f /dev/null"]  # Custom command for container2
+    # ports:
+    #   - "8081:80"
+
+# docker-compose down
+# docker-compose -f <Compose_File> up -d
