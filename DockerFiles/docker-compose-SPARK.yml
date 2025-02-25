@@ -8,8 +8,10 @@ services:
     container_name: master-node
     networks:
       - my_network
+    volumes: 
+      - <LOCAL_PATH>:/data # If you do not define it, the data would not be stored in the local machine.
     entrypoint: ["/bin/bash", "-c"]
-    command: ["/opt/spark/sbin/start-master.sh && tail -f /dev/null"]  # Custom command for container1
+    command: ["/opt/spark/sbin/start-master.sh && tail -f /dev/null"] 
     ports:
       - "8080:8080"
 
@@ -18,8 +20,10 @@ services:
     container_name: worker-node-1
     networks:
       - my_network
+    volumes: 
+      - <LOCAL_PATH>:/data
     entrypoint: ["/bin/bash", "-c"]
-    command: ["/opt/spark/sbin/start-slave.sh spark://master-node:7077 && tail -f /dev/null"]  # Custom command for container2
+    command: ["/opt/spark/sbin/start-slave.sh spark://master-node:7077 && tail -f /dev/null"] 
     # ports:
     #   - "8081:80"
 
@@ -29,10 +33,13 @@ services:
     container_name: worker-node-2
     networks:
       - my_network
+    volumes: 
+      - <LOCAL_PATH>:/data
     entrypoint: ["/bin/bash", "-c"]
-    command: ["/opt/spark/sbin/start-slave.sh spark://master-node:7077 && tail -f /dev/null"]  # Custom command for container2
+    command: ["/opt/spark/sbin/start-slave.sh spark://master-node:7077 && tail -f /dev/null"] 
     # ports:
     #   - "8081:80"
 
 # docker-compose down
 # docker-compose -f <Compose_File> up -d
+# THe Session UI can be accessed using port 4040. If using the docker image then you need forward it to local machine
