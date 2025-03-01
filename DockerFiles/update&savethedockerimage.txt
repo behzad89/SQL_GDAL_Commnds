@@ -3,3 +3,9 @@ To update the docker image we use the following command:
 docker commit <container_ID>  <Image_Name>:<Tag>
 
 It is recommended to use the VScode Docker extension to push & pull the saved docker image to the dockerHub
+
+How to install Conda in ubentu:
+curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh
+bash Miniconda3-latest-Linux-aarch64.sh
+eval "$(/root/miniconda3/bin/conda shell.bash hook)"
+
