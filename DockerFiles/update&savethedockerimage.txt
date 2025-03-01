@@ -9,3 +9,5 @@ curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh
 bash Miniconda3-latest-Linux-aarch64.sh
 eval "$(/root/miniconda3/bin/conda shell.bash hook)"
 
+To Install JAVA in Ubuntu:
+apt install plocate -y
