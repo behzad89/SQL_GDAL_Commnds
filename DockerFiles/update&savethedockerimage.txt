@@ -11,3 +11,6 @@ eval "$(/root/miniconda3/bin/conda shell.bash hook)"
 
 To Install JAVA in Ubuntu:
 apt install plocate -y
+
+
+salloc --cpus-per-task=10 --mem=150G --time=06:00:00
