@@ -1,0 +1,47 @@
+networks:
+  my-network:
+    external: true  # Use the existing network
+
+services:
+  master:
+    image: behzad89/geo-miniconda3:latest
+    container_name: spark-master
+    networks:
+      - my-network
+    volumes: 
+      - /Users/behzadvalipourshokouhi/trainSession/apache-sedona-book/book:/data # If you do not define it, the data would not be stored in the local machine.
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["/opt/spark/sbin/start-master.sh && tail -f /dev/null"] 
+    ports:
+      - "8080:8080"
+
+  spark-worker-1:
+    image: behzad89/geo-miniconda3:latest
+    container_name: spark-worker-1
+    networks:
+      - my-network
+    volumes: 
+      - /Users/behzadvalipourshokouhi/trainSession/apache-sedona-book/book:/data
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["/opt/spark/sbin/start-slave.sh spark://spark-master:7077 && tail -f /dev/null"] 
+    # ports:
+    #   - "8081:8081"
+
+
+  spark-worker-2:
+    image: behzad89/geo-miniconda3:latest
+    container_name: spark-worker-2
+    networks:
+      - my-network
+    volumes: 
+      - /Users/behzadvalipourshokouhi/trainSession/apache-sedona-book/book:/data
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["/opt/spark/sbin/start-slave.sh spark://spark-master:7077 && tail -f /dev/null"] 
+    # ports:
+    #   - "8081:8081"
+
+# docker-compose down
+# docker-compose -f <Compose_File> up -d
+# THe Session UI can be accessed using port 4040. If using the docker image then you need forward it to local machine
+# docker network inspect my-network :  To find the IP of workers using this network
+# Fo master node it is required to find the IP of the machine and then forward the port of it. It is the same for workers as well.
